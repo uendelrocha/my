@@ -11,29 +11,64 @@ import shutil
 from myterminal import cll, print_erro, print_aviso, OK
 from myconstant import SLASH
 from binascii import crc32
-from hashlib import sha1, md5
+from hashlib import sha1 as sha160, sha256, sha512, md5
 
 #%% CONSTANTS
 
-#%% Calcula hashes de um arquivo
+#%% Calcula hashes de um arquivo (colisões conhecidas 1/2^32)
+# Este hash não deve ser usado para guardar senhas
 def crc(file_path):
   with open(file_path, 'rb') as f:
     return hex(crc32(f.read()) & 0xffffffff)
-        
+
+#%% Calcula hashes de uma string (colisões: 1/2^32)
+# Este hash não deve ser usado para guardar senhas
 def crc_str(s:str, encoding = 'utf-8'):
   return hex(crc32(s.encode(encoding)) & 0xffffffff)
 
+#%% Calcula hash md5 (colisões conhecidas 1/2^128)
+# Este hash não deve ser usado para guardar senhas
+def md5_str(s:str, encoding = 'utf-8'):
+  return md5(s.encode(encoding)).hexdigest()
+
+#%% Calcula hash sha160 (colisões 1/2^160)
+# Este hash NÃO deve ser usado para guardar senhas
+def sha160_str(s:str, encoding = 'utf-8'):
+  return sha160(s.encode(encoding)).hexdigest()
+
+def sha1(s:str, encoding = 'utf-8'):
+  return sha160_str(s, encoding)
+
+
+#%% Calcula hash sha256 (colisões 1/2^256)
+# Este hash pode ser usado para guardar senhas
+def sha256_str(s:str, encoding = 'utf-8'):
+  return sha256(s.encode(encoding)).hexdigest()
+
+def sha2(s:str, encoding = 'utf-8'):
+  return sha256_str(s, encoding)
+
+#%% Calcula hash sha512 (colisões 1/2^512)
+# Este hash pode ser usado para guardar senhas
+def sha512_str(s:str, encoding = 'utf-8'):
+  return sha512(s.encode(encoding)).hexdigest()
+
+def sha3(s:str, encoding = 'utf-8'):
+  return sha512_str(s, encoding)
+
 #%% Retorna uma lista de arquivos salvos no formato parquet no diretorio informado
 def dir_files(prefix = 'pecas', extension = None, path=f".{SLASH}"):
-  
+
   files_size = 0
   # Todos os arquivos do diretório
   files = [file for file in os.listdir(path=path) if os.path.isfile(path + file)]
-  
+
   # Todos os arquivos com extensão informado em sufix_name
-  if extension:
-    files = [file for file in files if str(file).split('.')[-1] == extension]
-    
+  if type(extension) is str:
+    extension = [extension]
+  if extension != []:
+    files = [file for file in files if str(file).split('.')[-1] in extension]
+
   # Todos os arquivos com parte inicial informada em prefix_name
   if prefix:
     temp = [[0]*len(files),[0]*len(files)]
@@ -43,7 +78,7 @@ def dir_files(prefix = 'pecas', extension = None, path=f".{SLASH}"):
           temp[0][i] = file
           temp[1][i] = os.path.getsize(path + file)
           files_size += temp[1][i]
-    
+
     # Ordena os arquivos por tamanho
     sizes = sorted(temp[1], reverse=False) # Do menor para o maior
     files = []
@@ -55,14 +90,14 @@ def dir_files(prefix = 'pecas', extension = None, path=f".{SLASH}"):
                         # Isso visa evitar repetição da posição de arquivos com
                         # mesmo tamanho. Garante que o arquivo seja selecionado
                         # apenas uma vez na lista.
-     
+
   return files, files_size
 
-#%% Move arquivos para o diretório temp
-def mv_to_temp(filename:str, path_output:str=f".{SLASH}"):
-  
+#%% Move arquivos para um diretório informado em path_output
+def mv_file(filename:str, path_output:str=f".{SLASH}"):
+
   tmp_dir = path_output
-  
+
   if not os.path.isdir(tmp_dir):
     cll()
     print("{:80}".format(f"\rCriando diretório {tmp_dir}"), end="")
@@ -78,13 +113,17 @@ def mv_to_temp(filename:str, path_output:str=f".{SLASH}"):
       print("{:100}".format(f"\rMovendo {filename} para {tmp_dir} ... "), end="")
       try:
         shutil.move(filename, tmp_dir)
+        cll()
         print(f"\r{OK('Arquivo movido com sucesso')}", end="")
         return True
       except Exception as E:
+        cll()
         print_erro(f"Erro ao mover {filename}: {E.args}")
     else:
+      cll()
       print_aviso(f"Arquivo {filename} não encontrado.")
   else:
+    cll()
     print_aviso(f"{tmp_dir} não encontrado.")
 
   return False
@@ -107,5 +146,3 @@ def rm_file(filename:str):
     print_aviso(f"Arquivo {filename} não encontrado.")
 
   return False
-
-

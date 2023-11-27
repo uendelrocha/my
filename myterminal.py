@@ -15,13 +15,14 @@ TERMINAL_SIZE = os.get_terminal_size
 
 ERRO = fg.yellow + fx.bold + bg.red
 AVISO = fg.red + fx.bold + bg.yellow
-OK = fg.green
+OK = fg.green + fx.bold
+INFO = fg.cyan + fx.bold
 
 CLEAR_LINE_MSG = f"\r{' ' * TERMINAL_SIZE()[0]}"
 
 #%% Configurações do terminal
 def max_cols():
-  return TERMINAL_SIZE()[0]
+  return TERMINAL_SIZE()[0] * 2
 
 def max_lines():
   return TERMINAL_SIZE()[1]
@@ -31,27 +32,30 @@ def cll(size = max_cols()):
   print(f"\r{' ' * size}", end="")
 
 #%% Funções que retornam mensagens formatadas no terminal
-def print_erro(msg):
+def print_erro(msg, end = ''):
   cll()
-  print("{:>210}".format(f"\r\U000026D4 {ERRO('ERRO')} {msg}"), 
-        end='\U000026D4 \r\n')
+  print("{:>210}".format(f"\r\U000026D4 {ERRO('ERRO')} {msg}"),
+        end='\U000026D4 \r\n' if end == '' else f'\U000026D4 {end}')
 
-def print_aviso(msg):
+def print_aviso(msg, end = ''):
   cll()
-  print("{:80}".format(f"\r\U000026A0 {AVISO('AVISO')} {msg}"), 
-        end='\U000026A0 \r')
+  print("{:80}".format(f"\r\U000026A0 {AVISO('AVISO')} {msg}"),
+        end='\U000026A0 \r' if end == '' else f'\U000026A0 {end}')
 
 def print_ok(msg="OK", end=""):
   cll()
   print("{:>210}".format(f"{OK(msg)}"), end=end)
-  
+
+def print_info(msg="INFO", end=""):
+  cll()
+  print("{:<120}".format(f"{INFO(msg)}"), end=end)
 
 
 #%% GAUGES AND BARS
 def gauge(i, max = 100, steps = 20):
   percent = round((i / max) * 100, 4)
   step = int(steps * percent // 100)
-  return f"{percent:0.2f}% {'■' * step:⬚<{steps}}"
+  return f"{i}/{max} {percent:0.2f}% {'■' * step:⬚<{steps}}"
 
 def slide_bar(i, steps = 10, fill_char = '■', step_char = '⬚', slide = True):
   bar = list(step_char * steps)
@@ -63,13 +67,13 @@ def slide_bar(i, steps = 10, fill_char = '■', step_char = '⬚', slide = True)
 
   bar = "".join(bar)
   return f"{bar:{steps}}" #f"{bar:<{steps}}".format(bar)
-    
+
 # for i in range(11):
 #     caixa = list("⬚" * 10)
 #     caixa[0:i % 10 + 1] = "■" * (i%10+1)
 #     caixa = "".join(caixa)
 #     print(f'{caixa}', end=f"{i}")
-#     time.sleep(0.5)  
+#     time.sleep(0.5)
 
 
 propellers = {
@@ -78,7 +82,7 @@ propellers = {
   "vslice": ['_','▄','■', '▀', '¯'], # ASCII: _, 220, 254, 223, 254, 238
   "vbar": ['▁','▂','▃','▄','▅','▆','▇','█','■','▀','¯'], # i % 10
   'hbar': ['▏','▎','▍','▋','▊','▉'], # i % 5
-  'sonar': ['◌','◯','◖','●','◗'], # i % 5
+  'sonar': ['◯','⬤','●','•','○','◌'], # i % 3
   "dash": ['_','‗','═','¯­­­'], # i % 4
   "squares": ['◳','◲','◱','◰'],
   "pipes": ['╗','╝','╚','╔'],
@@ -89,4 +93,3 @@ propellers = {
 
 def propeller():
   return propellers[list(propellers.keys())[randint(0, len(propellers)-1)]]
-
