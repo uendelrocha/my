@@ -16,18 +16,18 @@ from hashlib import sha1 as sha160, sha256, sha512, md5
 #%% CONSTANTS
 
 #%% Calcula hashes de um arquivo (colisões conhecidas 1/2^32)
-# Este hash não deve ser usado para guardar senhas
+# Este hash NÃO deve ser usado para guardar senhas
 def crc(file_path):
   with open(file_path, 'rb') as f:
     return hex(crc32(f.read()) & 0xffffffff)
 
 #%% Calcula hashes de uma string (colisões: 1/2^32)
-# Este hash não deve ser usado para guardar senhas
+# Este hash NÃO deve ser usado para guardar senhas
 def crc_str(s:str, encoding = 'utf-8'):
   return hex(crc32(s.encode(encoding)) & 0xffffffff)
 
 #%% Calcula hash md5 (colisões conhecidas 1/2^128)
-# Este hash não deve ser usado para guardar senhas
+# Este hash NÃO deve ser usado para guardar senhas
 def md5_str(s:str, encoding = 'utf-8'):
   return md5(s.encode(encoding)).hexdigest()
 

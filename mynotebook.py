@@ -1,3 +1,5 @@
+from xdrlib import ConversionError
+import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,8 +13,11 @@ from IPython.display import display
 from enum import Enum #, unique
 from datetime import date, datetime, timedelta
 
-date_format = '%Y-%m-%d' # '2000-01-17'
-datetime_format = '%Y-%m-%d %H:%M:%S' # '2000-01-17 13:00:00'
+DATE_FORMAT = '%Y-%m-%d' # '2000-01-17'
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S' # '2000-01-17 13:00:00'
+
+CURRENT_DATE = datetime.now().strftime(DATE_FORMAT)
+YESTERDAY_DATE = (datetime.now() - timedelta(days=1)).strftime(DATE_FORMAT)
 
 class DatePart():
   y   = timedelta(days    = 365)
@@ -79,13 +84,10 @@ def add_date(a_date:date = date.today(), date_part:DatePart=DatePart.d, amount:i
 def add_datetime(a_datetime:datetime = datetime.now(), datetime_part:DateTimePart=DateTimePart.s, amount:int = 0):
   
   if type(a_datetime) is str:
-    a_datetime = datetime.strptime(a_datetime, datetime_format)
+    a_datetime = datetime.strptime(a_datetime, DATETIME_FORMAT)
     
   return datetime(a_datetime) + datetime_part * amount
   
-  
-  
-
 #%% roundUp & roundDown
 def roundUp(number):
 
@@ -278,23 +280,27 @@ def delete_overlap_columns(df_base, df_assoc, no_delete = []):
   Author (email): UENDEL ROCHA (uendelrocha@gmail.com)
   Last release: 2023/05/03
   '''
+  myt.print_info('Apagando colunas duplicadas...', end= ' ')
   df_return = df_assoc.copy(deep=True)
   for column in df_base.columns:
     if column not in no_delete:
       if column in df_return.columns:
         del df_return[column]
 
+  myt.print_ok()
   return df_return
 
 #%% drop_null_columns
 def drop_null_columns(dataframe:pd.DataFrame):
 
+  myt.print_info('Apagando linhas com valores nulos em todas as colunas...', end= ' ')
   dataframe.dropna(
     axis = 1, # drop columns
     how = 'all', # If all values are NA, drop
     inplace = True
     )
 
+  myt.print_ok()
   return dataframe
 
 #%% COLUMNS ORDERBY
@@ -304,7 +310,7 @@ def reposition_columns(dataframe:pd.DataFrame,
                        no_columns=[]):
 
   myt.cll()
-  print('\rReposicionando colunas. Aguarde...', end=' ')
+  myt.print_info('Reposicionando colunas...', end=' ')
 
   column_names = list(dataframe.columns.sort_values())
   column_names = [c for c in column_names if c not in first_columns + last_columns]
@@ -324,7 +330,7 @@ def reposition_columns(dataframe:pd.DataFrame,
 
   df_result = dataframe[column_names].copy(deep=True) # Cria copia do dataset com colunas ordenadas
 
-  print(myt.OK('Colunas reposicionadas.'), end=' ')
+  myt.print_ok()
 
   return df_result
 
@@ -372,14 +378,25 @@ def float_to_floor_cols(dataframe:pd.DataFrame,
 
   '''
   
-  def floor(value):
-    return math.floor(float(value))
+  myt.print_info('Convertendo colunas...', end= '\n')
+
+  def get_floor(value):
+    try:
+      # cleaned_value = ''.join([a for a in str(value) if a in [str(n) for n in list(range(0, 10))] + ['.']]).rstrip('.')
+      # if cleaned_value == value:
+      #  return math.floor(float(value))
+      # else:
+      #  return value
+      return math.floor(float(value))
+    except:
+      return 'EXCEPTION'
+
 
   # Reindexa o dataframe
   # dataframe.reset_index(drop=True, inplace=True)
 
   # Garante que o dataframe passado no parâmetro não seja modificado inplace
-  dataframe = dataframe.copy(deep=True)
+  result = dataframe.copy(deep=True)
   none_values = ['NaN', 'nan', 'None', '']
 
   # Transforma colunas float64 em str, remove decimais
@@ -387,62 +404,73 @@ def float_to_floor_cols(dataframe:pd.DataFrame,
   #       exigindo a utilização do tipo str para remover decimais. Por essa
   #       razão, esta função converte para str em vez de para int.
   if cols is None or cols == []:
-    cols = floatCols(dataframe)
+    cols = floatCols(result)
 
-  for col in cols:
+  objColumns = objCols(result)
+  for col in [c for c in cols if c not in objColumns]:
 
     myt.cll()
-    msg_col = f"\rTruncating {col:<25}" +\
+    msg_col = f"\rConvertendo {col:<25}" +\
       f"{cols.index(col)+1}/{len(cols):<7}"
     print(msg_col, end=' ')
 
-    dataframe = dataframe.astype({col: str})
+    # Converte a coluna para string
+    result = result.astype({col: str})
 
     index_nones = []
     # Remove o ponto flutuante das colunas transformadas em string
     if floor:
-      try:
-        # Tenta primeiro remover de uma vez por coluna
-        dataframe[col] = dataframe[col].map(floor, na_action='ignore')
-      except:
+      # Tenta primeiro remover de uma vez por coluna
+      # result[col] = result[col].map(lambda x: math.floor(float(x)), na_action='ignore')
+      # result[col] = result[col].map(get_floor, na_action='ignore')
+      series = result[col].copy(deep=True)
+      series = series.map(get_floor, na_action='ignore')
+      has_exception = (series == 'EXCEPTION').any()
+      
+      myt.cll(120)
+      # Verifica se há erro na série
+      # Se houver erro, os valores são do tipo string
+      if not has_exception:
+        result[col] = series.copy(deep=True)
+      else:
         # Se não der certo com map, converte cada elemento da coluna
-        for i, x in zip(dataframe.index,
-                        list(dataframe[col])):
+        for i, x in zip(result.index,
+                        list(result[col])):
           
-          col_text = str(x[0:21].encode('utf8'))
+          col_text = str(x[0:21].encode('utf8').decode())
           col_text += '...' if len(col_text) >= 20 else ''
           msg_value = f"{col_text:<23}" +\
-            f"{myt.gauge(i+1, dataframe.shape[0],10):>25}"
-          myt.cll()
+            f"{myt.gauge(i+1, result.shape[0],10):>25}"
+          myt.cll(120)
           print(msg_col + msg_value, end='')
 
           if x is not np.NaN or x is not None:
             try:
-              dataframe.loc[i, (col)] = math.floor(float(x))
+              result.loc[i, (col)] = math.floor(float(x))
             except:
-              dataframe.loc[i, (col)] = str(dataframe.loc[i, (col)])
+              result.loc[i, (col)] = str(result.loc[i, (col)])
               index_nones.append(i)
 
     if index_nones == []:
       try:
-        dataframe = dataframe.astype({col: astype})
+        result = result.astype({col: astype})
       except Exception as E:
         print(f'Ocorreu um erro ao converter {col} para {str(astype)}\t-->', E.args)
         print(f'Aviso: A coluna {col} não foi convertida para {str(astype)}.')
     else:
       # for i_none in index_nones:
       for j in index_nones:
-        value = dataframe.loc[j, (col)]
+        value = result.loc[j, (col)]
         # Valor do primeiro registro quando há índice duplicado no dataframe
         if type(value) is pd.Series:
           value = value[col].iloc[0]
 
         if value.strip() in none_values:
-            dataframe.loc[j, (col)] = None
+            result.loc[j, (col)] = None
 
   myt.cll()
-  print(f"{myt.OK('Dataframe truncated!')}")
-  return dataframe
+  myt.print_ok('\nConversão concluída.')
+  return result
 
 
 #%% myDistinct
@@ -522,7 +550,7 @@ def myGroupBy(dataframe, select_cols=['year', 'gdp', 'state'],
     return grouped
 
 #%% VERIFICAR SE HÁ OBSERVAÇÕES TUPLICADAS EM UM DATAFRAME
-def is_duplicated(dataframe, cols:list(), group_by:list()):
+def is_duplicated(dataframe, cols:list, group_by:list):
 
   '''
   Objetivo
@@ -679,52 +707,264 @@ def lsOutliers(dataframe, cols=[], cumulative=False, verbose=False):
   return result
 
 #################################################################################################
-def get_periods(start_year:int = date.today().year, end_year:int = date.today().year, limit = 5):
+def get_months(year:int):
+  intervals = [ 
+    ('01-01', '01-31'),
+    ('02-01', '03-01'), # O mês de fevereiro é calculado
+    ('03-01', '03-31'),
+    ('04-01', '04-30'),
+    ('05-01', '05-31'),
+    ('06-01', '06-30'),
+    ('07-01', '07-31'),
+    ('08-01', '08-31'),
+    ('09-01', '09-30'),
+    ('10-01', '10-31'),
+    ('11-01', '11-30'),
+    ('12-01', '12-31') ]
+  
+  months = []
+  for interval in intervals:
+    month = (str(year) + '-' + interval[0], str(year) + '-' + interval[1])
+    if interval[1] == '03-01':
+      month = (month[0], str(add_date(month[1], DatePart.d, amount = -1)))
+    months.append(month)
+    
+  return months
+
+def get_month(year, month:int):
+  if 1 <= month <= 12:
+    return get_months(year)[month - 1]
+   
+
+def get_periods(start_year:int = date.today().year, end_year:int = date.today().year, limit = 5, allow_future:bool = True):
   
   if end_year < start_year:
     raise ValueError(f"The value for 'start_year' ({start_year}) "+\
                      f"must be less than or equal to 'end_year' ({end_year}). " +\
                      "It's bigger.")
   
+  current_year = date.today().year
+
+  if start_year > current_year and not allow_future:
+    raise ValueError(f"The value for 'start_year' ({start_year}) " +
+                     f"must be less than or equal to the current year ({current_year}), " +
+                     "or allow_future must be True. " +
+                     "It's bigger and start in the future is not allowed.")
+
+  if end_year > current_year and not allow_future:
+    end_year = current_year
+
   if limit > 0:
     if end_year - start_year > limit:
       raise ValueError(f"The total range of periods cannot be greater than {limit} years.")
       
-    current_year = date.today().year
     if start_year < current_year - limit:
-      raise ValueError("The start of the period cannot be earlier than {current_year - limit}.")
+      raise ValueError("The start of the period cannot be earlier than {current_year - limit} years.")
     
     if end_year > current_year + limit:
-      raise ValueError("The end of the period cannot be later than {current_year + limit}.")
+      raise ValueError("The end of the period cannot be later than {current_year + limit} years.")
   
-  intervals = [ ('01-01', '01-31'),
-                ('02-01', '03-01'), # O mês de fevereiro é calculado
-                ('03-01', '03-31'),
-                ('04-01', '04-30'),
-                ('05-01', '05-31'),
-                ('06-01', '06-30'),
-                ('07-01', '07-31'),
-                ('08-01', '08-31'),
-                ('09-01', '09-30'),
-                ('10-01', '10-31'),
-                ('11-01', '11-30'),
-                ('12-01', '12-31') ]
 
   years = list(range(start_year, end_year + 1))
   periods = []
   for year in years:
-    for interval in intervals:
-      period = (str(year) + '-' + interval[0], str(year) + '-' + interval[1])
-      if interval[1] == '03-01':
-        period = (period[0], str(add_date(period[1], DatePart.d, amount = -1)))
-      periods.append(period)
+    periods += get_months(year)
 
   return periods
+
+def current_date(date_format: str = DATE_FORMAT):
+  return datetime.now().strftime(date_format)
+
+def yesterday_date(date_format: str = DATE_FORMAT):
+  return (datetime.now() - timedelta(days=1)).strftime(date_format)
+
+def current_year():
+  return date.today().year
+
+def is_past_date(a_date: str, date_format: str = DATE_FORMAT):
+  curr_date = datetime.strptime(current_date(date_format), date_format)
+  if isinstance(a_date, str):
+    return datetime.strptime(a_date, date_format) < curr_date
+  elif isinstance(a_date, datetime):
+    return a_date < curr_date
+  elif isinstance(a_date, date):
+    return a_date < date.today()
+
+def is_current_date(a_date: str, date_format: str = DATE_FORMAT):
+  curr_date = datetime.strptime(current_date(date_format), date_format)
+  if isinstance(a_date, str):
+    return datetime.strptime(a_date, date_format) == curr_date
+  elif isinstance(a_date, datetime):
+    return a_date == curr_date
+  elif isinstance(a_date, date):
+    return a_date == date.today()
+
+def is_future_date(a_date:str, date_format:str = DATE_FORMAT):
+  curr_date = datetime.strptime(current_date(date_format), date_format)
+  if isinstance(a_date, str):
+    return datetime.strptime(a_date, date_format) > curr_date
+  elif isinstance(a_date, datetime):
+    return a_date > curr_date
+  elif isinstance(a_date, date):
+    return a_date > date.today()
+
+def is_valid_date(a_date: str, date_format: str = DATE_FORMAT):
+  try:
+    if isinstance(a_date, str):
+      datetime.strptime(a_date, date_format)
+    elif isinstance(a_date, date):
+      a_date.strftime(date_format)
+    return True
+  except:
+    return False
+
+def is_valid_date_format(date_format: str):
+  try:
+    date.today().strftime(date_format)
+    return True
+  except:
+    return False
+
+def get_dates(start_date:str, end_date:str, sep:str = '-', 
+              date_format:str = DATE_FORMAT, reverse = False) -> list:
+
+  result = []
+
+  if not is_valid_date_format(date_format):
+    raise ValueError(
+      f"Invalid date format '{date_format}'. ")
+
+  if sep == '':
+    # If the separator is empty, the date format will be used as separator
+    start_period = datetime.strptime(start_date, date_format)
+    end_period = datetime.strptime(end_date, date_format)
+  elif sep not in start_date or sep not in end_date:
+    raise ValueError(f"Invalid separator '{sep}' in start_date or end_date. " +
+                     "The separator must be present in both dates.")
+  else:
+    start_day, start_month, start_year = [int(x) for x in start_date.split(sep)]
+    start_period = date(start_day, start_month, start_year)
+
+    end_day, end_month, end_year = [int(x) for x in end_date.split(sep)]
+    end_period = date(end_day, end_month, end_year)
+
+  # If the start date is greater than the end date, the dates are swapped
+  if start_period > end_period:
+    start_period, end_period = end_period, start_period
+
+  curr_date = start_period
+  while curr_date <= end_period:
+    result.append(curr_date.strftime(date_format))
+    curr_date = add_date(curr_date, DatePart.d, amount = 1)
+    
+  if reverse:
+    result.sort(reverse = True)
+    
+  return result
+
+def get_interval(start:str = YESTERDAY_DATE, end:str = CURRENT_DATE, 
+                 extract_dates:bool = True, 
+                 sep:str = '-', 
+                 date_format:str = DATE_FORMAT,
+                 reverse = False,
+                 limit = 0,
+                 allow_future:bool = True,
+):
+  """Gera intervalos de datas.
+
+  Esta função gera intervalos de datas, retornando tuplas 
+  contendo pares de datas ou períodos, dependendo dos parâmetros.
+
+  Args:
+    start: Data de início do intervalo (padrão: '1988-09-22').
+    end: Data de fim do intervalo (padrão: '1988-10-05').
+    get_dates: Se True, retorna datas individuais dentro do intervalo. 
+               Se False, retorna tuplas com as datas de início e fim de 
+               cada período (padrão: True).
+    sep: Separador usado na formatação da data (padrão: '-').
+    date_format: Formato da data (padrão: myn.date_format).
+    reverse: Se True, as datas são geradas em ordem decrescente 
+             (padrão: True).
+    allow_future: Se True, permite datas futuras. Se False, ignora 
+                  datas futuras (padrão: False).
+
+  Yields:
+    Tuplas contendo pares de datas ou períodos, dependendo do 
+    parâmetro `get_dates`.
+
+  Examples:
+    >>> for data, _ in get_interval():
+    ...   print(data)
+    1988-09-22
+    1988-09-23
+    ...
+    1988-10-05
+
+    >>> for periodo in get_interval(get_dates=False):
+    ...   print(periodo)
+    ('1988-09-22', '1988-10-05')
+
+  """
+  try:
+    start = int(start)
+    end   = int(end)
+
+    periods = get_periods(start, end, limit, allow_future)
+    periods = sorted(periods, reverse=reverse)
+  except:
+    if is_future_date(start) and not allow_future:
+      raise ValueError(f"Data de início {start} é futura.")
+
+    if is_future_date(end) and not allow_future:
+      end = str(date.today().strftime(date_format))
+
+    periods = [(start, end)]
+
+  for period in periods:
+    if not is_future_date(period[0]) or allow_future:
+      if extract_dates:
+        dates = get_dates(period[0], period[1], 
+                              sep=sep, date_format=date_format, 
+                              reverse=reverse)
+        for date in dates:
+          yield (date, date)
+      else:
+        yield period
+
 
 # =============================================================================
 # Informa se um valor é vazio, do tipo None ou um dos tipos np.NaN
 # =============================================================================
+NONES = [None, '', np.NaN]
+
+
 def in_nones(value):
-  NONES = [None, '', np.NaN]
   return value in NONES
+
+def calc_object_size(obj):
+    """
+    Calcula o tamanho em bytes de um objeto complexo, incluindo seus elementos internos.
+    """
+    seen = set()
+    def sizeof(o):
+        if id(o) in seen:
+            return 0
+        seen.add(id(o))
+        size = sys.getsizeof(o)
+        if isinstance(o, dict):
+            size += sum(sizeof(k) + sizeof(v) for k, v in o.items())
+        elif isinstance(o, (list, tuple, set, frozenset)):
+            size += sum(sizeof(i) for i in o)
+        return size
+    return sizeof(obj)
     
+
+def human_bytes(size):
+    """
+    Converte um tamanho em bytes para um valor legível em KB, MB, GB, etc.
+    """
+    for unit in ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB']:
+        if size < 1024.0:
+            break
+        size /= 1024.0
+    return f"{size:.2f} {unit}"
