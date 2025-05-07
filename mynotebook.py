@@ -444,7 +444,7 @@ def float_to_floor_cols(dataframe:pd.DataFrame,
           myt.cll(120)
           print(msg_col + msg_value, end='')
 
-          if x is not np.NaN or x is not None:
+          if x is not np.nan or x is not None:
             try:
               result.loc[i, (col)] = math.floor(float(x))
             except:
@@ -933,7 +933,7 @@ def get_interval(start:str = YESTERDAY_DATE, end:str = CURRENT_DATE,
 
 
 # =============================================================================
-# Informa se um valor é vazio, do tipo None ou um dos tipos np.NaN
+# Informa se um valor é vazio, do tipo None ou um dos tipos np.nan
 # =============================================================================
 NONES = [None, '', np.nan]
 

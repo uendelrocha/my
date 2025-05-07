@@ -128,6 +128,48 @@ def mv_file(filename:str, path_output:str=f".{SLASH}"):
 
   return False
 
+#%% Copia arquivos para um destino informado em path_output
+def cp_file(filename:str, path_output:str=f".{SLASH}"):
+
+    tmp_dir = path_output
+
+    # Separa path_output em nome de diretório e nome de arquivo
+    dir_output = os.path.dirname(path_output)
+    file_out = os.path.basename(path_output)
+
+    if not file_out:
+        file_out = os.path.join(dir_output, os.path.basename(filename))
+
+    if not os.path.isdir(dir_output):
+        cll()
+        print("{:80}".format(f"\rCriando diretório {dir_output}"), end="")
+        try:
+            os.makedirs(name = dir_output, exist_ok=True)
+        except Exception as E:
+            print_erro(f"Erro ao criar {dir_output} {E.args}")
+
+  # Repete verificação do diretório
+    if os.path.isdir(dir_output):
+        if os.path.isfile(filename):
+            cll()
+            print("{:100}".format(f"\rCopiando {filename} para {file_out} ... "), end="")
+            try:
+                shutil.copy2(filename, file_out)
+                cll()
+                print(f"\r{OK('Arquivo copiado com sucesso')}", end="")
+                return True
+            except Exception as E:
+                cll()
+                print_erro(f"Erro ao copiar {filename}: {E.args}")
+        else:
+            cll()
+            print_aviso(f"Arquivo {filename} não encontrado.")
+    else:
+        cll()
+        print_aviso(f"{dir_output} não encontrado.")
+
+    return False
+
 #######################
 ## DELETA UM ARQUIVO ##
 #######################
