@@ -935,7 +935,7 @@ def get_interval(start:str = YESTERDAY_DATE, end:str = CURRENT_DATE,
 # =============================================================================
 # Informa se um valor é vazio, do tipo None ou um dos tipos np.NaN
 # =============================================================================
-NONES = [None, '', np.NaN]
+NONES = [None, '', np.nan]
 
 
 def in_nones(value):
