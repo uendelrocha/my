@@ -91,7 +91,7 @@ def add_datetime(a_datetime:datetime = datetime.now(), datetime_part:DateTimePar
 #%% roundUp & roundDown
 def roundUp(number):
 
-  if round(number, 0) > number: # round() rounded up
+  if round(number, 0) >= number: # round() rounded up
     result = round(number, 0)
   else: # round() rounded down
     result = round(number, 0) + 1
@@ -99,8 +99,7 @@ def roundUp(number):
   return result
 
 def roundDown(number):
-
-  if round(number, 0) < number: # round() rounded up
+  if round(number, 0) <= number: # round() rounded up
     result = round(number, 0)
   else: # round() rounded down
     result = round(number, 0) - 1
@@ -187,15 +186,23 @@ def myDescribe(dataframe, cols=[]):
     '''
     dfStat.loc['Fisher'] = dataframe[cols].skew(axis=0) # scipy.stats.skew(..., bias=False)
 
-    # Add z-score and p-value
-    dfStat.loc['z'], dfStat.loc['p'] = skewtest(dataframe[cols], axis=0)
+    # Add z-score and p-value (bicaudal)
+    dfStat.loc['z-score'], dfStat.loc['p-value (h1 \U00002260 0)'] = skewtest(dataframe[cols], axis=0)
+    _, dfStat.loc['p-value (h1 < 0)'] = skewtest(dataframe[cols], axis=0, alternative='less')
+    _, dfStat.loc['p-value (h1 > 0)'] = skewtest(dataframe[cols], axis=0, alternative='greater')
 
     # Add kurtosis
     dfStat.loc['kurtosis'] = dataframe[cols].kurt(axis=0)
-
+          
+    # Ajusta Pearson asymmetry para aceitar string
+    dfStat.loc['Pearson asymmetry'] = None  # Inicializa como None (object)
+    dfStat.loc['Pearson asymmetry'] = dfStat.loc['Pearson asymmetry'].astype('object')
 
     for col in cols:
       mode = dataframe[col].mode().to_list()
+
+      #dfStat.loc['Pearson asymmetry', col] = None  # Inicializa como None (object)
+      dfStat[col] = dfStat[col].astype('object')
 
       ## Add Pearson asymmetry
       if 0.00 < abs(dfStat.loc['Pearson', col]) < 0.15:
@@ -968,3 +975,27 @@ def human_bytes(size):
             break
         size /= 1024.0
     return f"{size:.2f} {unit}"
+
+def human_seconds(seconds):
+    """
+    Converte segundos em ano, mês, semanas, dias, horas, minutos, segundos.
+    Retorna no formato 0h00min0.000s
+    """
+    times = {'h': 0, 'min': 0, 's':0}
+    for unit in times.keys():
+        match unit:
+            case 'h':
+                divisor = 60 * 60
+            case 'min':
+                divisor = 60
+            case 's':
+                divisor = 1
+
+        times[unit] = int(seconds // divisor)
+        seconds = seconds % divisor
+
+        if seconds < 60.0:
+            times['s'] = seconds
+            break
+
+    return f"{times['h']:9}h{times['min']:02}min{times['s']:.3f}s"

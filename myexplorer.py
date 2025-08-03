@@ -8,7 +8,7 @@ Created on Mon Jun 26 22:31:29 2023
 #%% IMPORTS
 import os
 import shutil
-from myterminal import cll, print_erro, print_aviso, OK
+from myterminal import cll, print_erro, print_aviso, print_ok, OK
 from myconstant import SLASH
 from binascii import crc32
 from hashlib import sha1 as sha160, sha256, sha512, md5
@@ -104,7 +104,7 @@ def mv_file(filename:str, path_output:str=f".{SLASH}"):
     try:
       os.makedirs(name = tmp_dir, exist_ok=True)
     except Exception as E:
-      print_erro(f"Erro ao criar {tmp_dir} {E.args}")
+      print_erro(f"Erro ao criar {tmp_dir} {E}")
 
   # Repete verificação do diretório
   if os.path.isdir(tmp_dir):
@@ -118,7 +118,7 @@ def mv_file(filename:str, path_output:str=f".{SLASH}"):
         return True
       except Exception as E:
         cll()
-        print_erro(f"Erro ao mover {filename}: {E.args}")
+        print_erro(f"Erro ao mover {filename}: {E}")
     else:
       cll()
       print_aviso(f"Arquivo {filename} não encontrado.")
@@ -146,7 +146,7 @@ def cp_file(filename:str, path_output:str=f".{SLASH}"):
         try:
             os.makedirs(name = dir_output, exist_ok=True)
         except Exception as E:
-            print_erro(f"Erro ao criar {dir_output} {E.args}")
+            print_erro(f"Erro ao criar {dir_output} {E}")
 
   # Repete verificação do diretório
     if os.path.isdir(dir_output):
@@ -160,7 +160,7 @@ def cp_file(filename:str, path_output:str=f".{SLASH}"):
                 return True
             except Exception as E:
                 cll()
-                print_erro(f"Erro ao copiar {filename}: {E.args}")
+                print_erro(f"Erro ao copiar {filename}: {E}")
         else:
             cll()
             print_aviso(f"Arquivo {filename} não encontrado.")
@@ -180,10 +180,10 @@ def rm_file(filename:str):
     print("{:80}".format(f"\rDeletando {filename} ... "), end = "")
     try:
       os.remove(filename)
-      print('Arquivo deletado com sucesso.', end="")
+      print_ok()
       return True
     except Exception as E:
-      print_erro(f"Erro ao apagar {filename}: {E.args}")
+      print_erro(f"Erro ao apagar {filename}: {E}")
   else:
     print_aviso(f"Arquivo {filename} não encontrado.")
 
