@@ -257,8 +257,8 @@ def myDescribe(dataframe, cols=[]):
     # Add Dtypes
     dfStat.loc['Dtype'] = dataframe[cols].dtypes.reset_index()[0].to_list()
 
-    display(dfStat.T)
-    #display(df3[float_cols].describe().T)
+    # display(dfStat.T)
+    # display(df3[float_cols].describe().T)
     dataframe[cols].boxplot(figsize=(15, 5))
     #dataframe[cols].info()
 
