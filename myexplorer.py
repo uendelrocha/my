@@ -11,9 +11,36 @@ import shutil
 from myterminal import cll, print_erro, print_aviso, OK
 from myconstant import SLASH
 from binascii import crc32
+import zlib
 from hashlib import sha1 as sha160, sha256, sha512, md5
+from enum import Enum
 
 #%% CONSTANTS
+
+class OutputFormat(Enum):
+    hex0x = lambda s: '0x{:08x}'.format(s) # Formato hexadecimal com prefixo 0x
+    int32 = lambda s: int(s, 16) & 0xffffffff # Números positivos com 32 bits
+    int16 = lambda s: int(s, 16) & 0xffff # Números positivos com 16 bits
+    bas16 = lambda s: int(s, 16) # Inteiro de 32 bits na base 16 (com sinal)
+    str8x = lambda s: format(s, '08x') # Formato string hexadecimal de 8 caracteres
+
+def hash_crc32(s, out_format: OutputFormat = OutputFormat.hex0x):
+    return out_format(zlib.crc32(s.encode()))
+
+def hash_crc32_hex(s):
+    return hash_crc32(s, OutputFormat.hex0x)
+
+def hash_crc32_int32(s):
+    return hash_crc32(s, OutputFormat.int32)
+
+def hash_crc32_int16(s):
+    return hash_crc32(s, OutputFormat.int16)
+
+def hash_crc32_bas16(s):
+    return hash_crc32(s, OutputFormat.bas16)
+
+def hash_crc32_bas16(s):
+    return hash_crc32(s, OutputFormat.str8x)
 
 #%% Calcula hashes de um arquivo (colisões conhecidas 1/2^32)
 # Este hash NÃO deve ser usado para guardar senhas
