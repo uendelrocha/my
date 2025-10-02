@@ -10,7 +10,7 @@ import os
 import shutil
 from myterminal import cll, print_erro, print_aviso, print_ok, OK
 from myconstant import SLASH
-from binascii import crc32
+# from binascii import crc32 # Apenas um wrapper para zlib.crc32
 import zlib
 from hashlib import sha1 as sha160, sha256, sha512, md5
 from enum import Enum
@@ -39,8 +39,16 @@ def hash_crc32_int16(s):
 def hash_crc32_bas16(s):
     return hash_crc32(s, OutputFormat.bas16)
 
-def hash_crc32_bas16(s):
+def hash_crc32_str8x(s):
     return hash_crc32(s, OutputFormat.str8x)
+
+def hash_sha256_int64(s: str, encoding='utf-8') -> int:
+    """
+    Retorna os primeiros 64 bits do SHA-256 como inteiro
+    Muito mais seguro que CRC64
+    """
+    hash_bytes = sha256(s.encode(encoding)).digest()
+    return int.from_bytes(hash_bytes[:8], byteorder='big')
 
 #%% Calcula hashes de um arquivo (colisões conhecidas 1/2^32)
 # Este hash NÃO deve ser usado para guardar senhas
