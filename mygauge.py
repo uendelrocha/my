@@ -41,6 +41,7 @@ class MyGauge:
 
     def tslp():
         # time since last waypoint".
+        pass
 
     def kts():
         pass

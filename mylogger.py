@@ -2,18 +2,18 @@ import logging
 
 global logger
 
-# FunÁ„o para configurar o logging
+# Fun√ß√£o para configurar o logging
 def setup_logging(app_name:str):
-    # Obter o logger raiz ou um logger especÌfico para sua aplicaÁ„o
-    # Usar um logger nomeado para a aplicaÁ„o È uma boa pr·tica
+    # Obter o logger raiz ou um logger espec√≠fico para sua aplica√ß√£o
+    # Usar um logger nomeado para a aplica√ß√£o √© uma boa pr√°tica
     logger = logging.getLogger(app_name) # Ou logging.getLogger() para o logger raiz
-    logger.setLevel(logging.DEBUG)  # NÌvel mais baixo para o logger processar
+    logger.setLevel(logging.DEBUG)  # N√≠vel mais baixo para o logger processar
 
-    # Evitar adicionar m˙ltiplos handlers se esta funÁ„o for chamada v·rias vezes
+    # Evitar adicionar m√∫ltiplos handlers se esta fun√ß√£o for chamada v√°rias vezes
     if logger.hasHandlers():
         logger.handlers.clear()
 
-    # --- ConfiguraÁ„o do FileHandler (para gravar em arquivo) ---
+    # --- Configura√ß√£o do FileHandler (para gravar em arquivo) ---
     file_handler = logging.FileHandler(f'{app_name}.log', mode='a', encoding='utf-8')
     file_handler.setLevel(logging.DEBUG)  # Grava tudo a partir de DEBUG no arquivo
 
@@ -25,7 +25,7 @@ def setup_logging(app_name:str):
     file_handler.setFormatter(file_formatter)
     logger.addHandler(file_handler)
 
-    # --- ConfiguraÁ„o do StreamHandler (para exibir na tela) ---
+    # --- Configura√ß√£o do StreamHandler (para exibir na tela) ---
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(logging.INFO)  # Exibe a partir de INFO na tela
 

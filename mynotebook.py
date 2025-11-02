@@ -981,6 +981,7 @@ def human_seconds(seconds):
     Converte segundos em ano, mês, semanas, dias, horas, minutos, segundos.
     Retorna no formato 0h00min0.000s
     """
+    seconds = float(seconds)
     times = {'h': 0, 'min': 0, 's':0}
     for unit in times.keys():
         match unit:
