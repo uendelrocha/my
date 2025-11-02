@@ -10,51 +10,6 @@ import os
 import shutil
 from myterminal import cll, print_erro, print_aviso, print_ok, OK
 from myconstant import SLASH
-from binascii import crc32
-from hashlib import sha1 as sha160, sha256, sha512, md5
-
-#%% CONSTANTS
-
-#%% Calcula hashes de um arquivo (colisões conhecidas 1/2^32)
-# Este hash NÃO deve ser usado para guardar senhas
-def crc(file_path):
-  with open(file_path, 'rb') as f:
-    return hex(crc32(f.read()) & 0xffffffff)
-
-#%% Calcula hashes de uma string (colisões: 1/2^32)
-# Este hash NÃO deve ser usado para guardar senhas
-def crc_str(s:str, encoding = 'utf-8'):
-  return hex(crc32(s.encode(encoding)) & 0xffffffff)
-
-#%% Calcula hash md5 (colisões conhecidas 1/2^128)
-# Este hash NÃO deve ser usado para guardar senhas
-def md5_str(s:str, encoding = 'utf-8'):
-  return md5(s.encode(encoding)).hexdigest()
-
-#%% Calcula hash sha160 (colisões 1/2^160)
-# Este hash NÃO deve ser usado para guardar senhas
-def sha160_str(s:str, encoding = 'utf-8'):
-  return sha160(s.encode(encoding)).hexdigest()
-
-def sha1(s:str, encoding = 'utf-8'):
-  return sha160_str(s, encoding)
-
-
-#%% Calcula hash sha256 (colisões 1/2^256)
-# Este hash pode ser usado para guardar senhas
-def sha256_str(s:str, encoding = 'utf-8'):
-  return sha256(s.encode(encoding)).hexdigest()
-
-def sha2(s:str, encoding = 'utf-8'):
-  return sha256_str(s, encoding)
-
-#%% Calcula hash sha512 (colisões 1/2^512)
-# Este hash pode ser usado para guardar senhas
-def sha512_str(s:str, encoding = 'utf-8'):
-  return sha512(s.encode(encoding)).hexdigest()
-
-def sha3(s:str, encoding = 'utf-8'):
-  return sha512_str(s, encoding)
 
 #%% Retorna uma lista de arquivos salvos no formato parquet no diretorio informado
 def dir_files(prefix = 'pecas', extension = None, path=f".{SLASH}"):
