@@ -63,7 +63,13 @@ def max_chars_font(font_family='Courier', font_size=12):
 
     return max_cols, max_rows
 
-MAX_H_CHARS, MAX_V_CHARS = max_chars_font('Consolas', 16)
+try:
+    MAX_H_CHARS, MAX_V_CHARS = max_chars_font('Consolas', 16)
+except Exception as e:
+    # Fallback para ambiente headless (sem display)
+    MAX_H_CHARS, MAX_V_CHARS = (80, 24)  # Valores padrão
+    import logging
+    logging.warning(f"Modo headless detectado: usando valores padrão de terminal")
 
 #%% Configurações do terminal
 def max_cols():
