@@ -19,7 +19,13 @@ class MyError(Exception):
     
     self._object = obj
     self._errorcode = errorcode
-    self.__msg_err = f"ERRO: {msg} [OBJECT: {self.object_name} | TYPE: {self.object_type} | ERRORCODE: {self.errorcode} | EXCEPTION: {type(ExceptionObject)}: {str(ExceptionObject)}]"
+
+    error_msg = f"ERRO: {msg}" if msg else "ERRO: Ocorreu um erro desconhecido."
+    obj_msg = f" OBJECT: {self.object_name} | TYPE: {self.object_type}" if self._object else ""
+    errorcode_msg = f" | ERRORCODE: {self.errorcode}" if errorcode else ""
+    exception_msg = f" | EXCEPTION: {type(ExceptionObject)}: {str(ExceptionObject)}" if ExceptionObject else ""
+
+    self.__msg_err = f"{error_msg} [{obj_msg}{errorcode_msg}{exception_msg}]"
 
     # A recomendação é que save_to_log esteja True na classe onde ocorre o erro,
     # mas desligado no tratamento geral. Assim, para evitar a perda de log em
@@ -137,6 +143,12 @@ class ValueNotFound(MyError):
   def __init__(self, msg, obj, errorcode:int=0, die=False, ExceptionObject:Exception=None):
     msg = f"VALOR OBRIGATÓRIO NÃO ENCONTRADO: {msg}"
     super().__init__(msg, obj=obj, errorcode=errorcode, save_to_log=True, die=die, ExceptionObject=ExceptionObject)
+
+class InconsistentDataError(MyError):
+  def __init__(self, msg, obj, errorcode:int=0, die=False, ExceptionObject:Exception=None):
+    msg = f"DADOS INCONSISTENTES: {msg}"
+    super().__init__(msg, obj=obj, errorcode=errorcode, save_to_log=True, die=die, ExceptionObject=ExceptionObject)
+
 
 class ParsingError(MyError):
   def __init__(self, msg, obj, errorcode:int=0, die=False, ExceptionObject:Exception=None):
