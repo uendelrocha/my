@@ -16,6 +16,9 @@ def setup_logging(app_name:str, log_to_file:bool=True, log_dir:str='.'):
     # Obter o logger nomeado para a aplicação
     logger = logging.getLogger(app_name)
     logger.setLevel(logging.DEBUG)
+    
+    # Evita a propagação para o root logger (previne duplicação)
+    logger.propagate = False
 
     # Evitar adicionar múltiplos handlers se esta função for chamada várias vezes
     if logger.hasHandlers():

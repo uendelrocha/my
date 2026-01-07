@@ -135,7 +135,7 @@ def rm_file(filename:str):
     print("{:80}".format(f"\rDeletando {filename} ... "), end = "")
     try:
       os.remove(filename)
-      print_ok()
+      print_ok(end='\n')
       return True
     except Exception as E:
       print_erro(f"Erro ao apagar {filename}: {E}")

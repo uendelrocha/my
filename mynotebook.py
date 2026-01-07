@@ -160,9 +160,21 @@ def get_months(year:int):
 def get_month(year, month:int):
     if 1 <= month <= 12:
         return get_months(year)[month - 1]
+
+# Extrai o ano de uma data informada no formato especificado
+def extract_year(a_date: str, date_format: str = DATE_FORMAT) -> int:
+    return datetime.strptime(a_date, date_format).year
+
+# Extrai o mês de uma data informada no formato especificado
+def extract_month(a_date: str, date_format: str = DATE_FORMAT) -> int:
+    return datetime.strptime(a_date, date_format).month
+
+# Extrai o dia de uma data informada no formato especificado
+def extract_day(a_date: str, date_format: str = DATE_FORMAT) -> int:
+    return datetime.strptime(a_date, date_format).day
      
 
-def get_periods(start_year:int = date.today().year, end_year:int = date.today().year, limit = 5, allow_future:bool = True):
+def get_periods(start_year:int = date.today().year, end_year:int = date.today().year, limit = 10, allow_future:bool = True):
     
     if end_year < start_year:
         raise ValueError(f"The value for 'start_year' ({start_year}) "+\
@@ -181,9 +193,13 @@ def get_periods(start_year:int = date.today().year, end_year:int = date.today().
         end_year = current_year
 
     if limit > 0:
-        if end_year - start_year > limit:
-            raise ValueError(f"The total range of periods cannot be greater than {limit} years.")
-            
+        year_range = end_year - start_year
+        if year_range > limit:
+            raise ValueError(
+                f"The year range ({year_range} years) exceeds the limit of {limit} years. "
+                f"To process a larger range, adjust the 'limit' parameter in the function call."
+            )
+        
         if start_year < current_year - limit:
             raise ValueError("The start of the period cannot be earlier than {current_year - limit} years.")
         
@@ -370,8 +386,8 @@ def get_interval(start:str = YESTERDAY_DATE, end:str = CURRENT_DATE,
 # =============================================================================
 # Informa se um valor é vazio, do tipo None ou um dos tipos np.nan
 # =============================================================================
-NONES = [None, '', np.nan]
-
+# String vazia não é None.
+NONES = [None, pd.NaT, np.nan, 'NaT', 'nan', 'NaN', 'None', '<NA>']
 
 def in_nones(value):
     return value in NONES

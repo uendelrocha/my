@@ -12,6 +12,7 @@ from random import randint
 import tkinter as tk
 from tkinter import font as tkfont
 import shutil
+import sys
 
 
 #%% CONSTANTES PARA SAÍDA DE TEXTO DO TERMINAL
@@ -102,21 +103,21 @@ def clear_line_msg():
 
 
 #%% Funções que retornam mensagens formatadas no terminal
-def print_erro(msg, end = ''):
+def print_erro(msg, end = '\n'):
   formato = "{:<" + str(len(msg)) + "}"
   # formato = "{:>240}"
   # cll()
   print(formato.format(f"\n\U000026D4 {ERRO('ERRO')} {msg}"),
-        end=' \U000026D4 \n' if end == '' else f' \U000026D4 {end}')
+        end=' \U000026D4 \n' if end == '' else f' \U000026D4 {end}', file=sys.stderr)
 
-def print_aviso(msg, end = ''):
+def print_aviso(msg, end = '\n'):
   formato = "{:<" + str(len(msg)) + "}"
   # formato = "{:80}"
   # cll()
   print(formato.format(f"\n\U000026A0 {AVISO('AVISO')} {msg}"),
         end=' \U000026A0 \n' if end == '' else f' \U000026A0 {end}')
 
-def print_ok(msg="OK", end=""):
+def print_ok(msg="OK", end="\n"):
   formato = "{:<" + str(len(msg)) + "}"
   # formato = "{:>" + str(len(msg)) + "}"
   # cll()
