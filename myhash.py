@@ -14,7 +14,7 @@ Licença: MIT
 
 # from binascii import crc32 # Apenas um wrapper para zlib.crc32
 # from zlib import crc32
-from my.mycrc import crc32, crc64
+from my import mycrc
 from hashlib import sha1 as sha160, sha256, sha512, md5
 from enum import Enum
 
@@ -58,7 +58,7 @@ def hash_crc32(s: str, out_format: OutputFormat = OutputFormat.hex32):
         >>> hash_crc32("123456", OutputFormat.str32)
         '884863d2'
     """
-    crc_int = crc32(s.encode()) & 0xffffffff  # Garante uint32
+    crc_int = mycrc.crc32(s.encode()) & 0xffffffff  # Garante uint32
     return out_format(crc_int)
 
 def hash_crc64(s: str, out_format: OutputFormat = OutputFormat.hex64):
@@ -80,7 +80,7 @@ def hash_crc64(s: str, out_format: OutputFormat = OutputFormat.hex64):
         >>> hash_crc64("123456", OutputFormat.str64)
         '64623a5aba0b3ea7'
     """
-    crc_int = crc64(s.encode()) & 0xffffffffffffffff  # Garante uint64
+    crc_int = mycrc.crc64(s.encode()) & 0xffffffffffffffff  # Garante uint64
     return out_format(crc_int)
 
 # Funções auxiliares CRC32
@@ -116,25 +116,51 @@ def hash_crc64_str(s: str) -> str:
 #%% Calcula hashes de um arquivo (colisões conhecidas 1/2^32)
 # Este hash NÃO deve ser usado para guardar senhas
 def crc_file(file_path):
-  with open(file_path, 'rb') as f:
-    return hex(crc32(f.read()) & 0xffffffff)
+  # Utiliza a implementação otimizada (incremental) do módulo mycrc
+  return hex(mycrc.crc32_file(file_path))
 
 #%% Calcula hashes de uma string (colisões: 1/2^32)
 # Este hash NÃO deve ser usado para guardar senhas
-def crc_str(s:str, encoding = 'utf-8'):
-  return hex(crc32(s.encode(encoding)) & 0xffffffff)
+def crc_str(s:str, encoding = 'utf-8') -> str:
+  return hex(mycrc.crc32(s.encode(encoding)) & 0xffffffff)
+
+def crc64_str(s:str, encoding = 'utf-8') -> str:
+    return hex(mycrc.crc64(s.encode(encoding)) & 0xffffffffffffffff)
 
 #%% Calcula hash md5 (colisões conhecidas 1/2^128)
 # Este hash NÃO deve ser usado para guardar senhas
-def md5_str(s:str, encoding = 'utf-8'):
+# MySQL: MD5(conteudo)
+# Oracle: STANDARD_HASH(conteudo, 'MD5')
+def md5_str(s:str, encoding = 'utf-8') -> str:
   return md5(s.encode(encoding)).hexdigest()
+
+# Retorna os primeiros 16 dígitos hex do hash md5 como uint64
+# (Usado em alguns bancos de dados NoSQL como chave primária)
+# Valor máximo: 0xFFFFFFFFFFFFFFFF = 18446744073709551615 (18 quintilhões) ou 2^64-1
+# MySQL: CAST(CONV(SUBSTR(MD5(conteudo), 1, 16), 16, 10) AS UNSIGNED)
+# Oracle: TO_NUMBER(SUBSTR(STANDARD_HASH(conteudo, 'MD5'), 1, 16), 'XXXXXXXXXXXXXXXX')
+def hash_md5_int64(s:str, encoding = 'utf-8') -> int:
+  return int(md5_str(s, encoding)[:16], 16)
+
+# Retorna os primeiros 8 dígitos hex do hash md5 como uint32
+# Não recomendado para uso em produção devido ao alto risco de colisões
+# Valor máximo: 0xFFFFFFFF = 4294967295
+# Com apenas 77.000 registros, há 50% de chance de colisão. 
+# Com 1 milhão de registros, a colisão é estatisticamente garantida.
+# Usado apenas para fins educacionais ou em sistemas com poucos registros.
+# O Int32 só deve ser usado se a unicidade não for crítica (ex: partition ID, bucket ID) 
+# ou se o volume de dados for muito pequeno (menos de 10.000 itens).
+# MySQL: CAST(CONV(SUBSTR(MD5(conteudo), 1, 8), 16, 10) AS UNSIGNED)
+# Oracle: TO_NUMBER(SUBSTR(STANDARD_HASH(conteudo, 'MD5'), 1, 8), 'XXXXXXXX')
+def hash_md5_int32(s:str, encoding = 'utf-8') -> int:
+  return int(md5_str(s, encoding)[:8], 16)
 
 #%% Calcula hash sha160 (colisões 1/2^160)
 # Este hash NÃO deve ser usado para guardar senhas
-def sha160_str(s:str, encoding = 'utf-8'):
+def sha160_str(s:str, encoding = 'utf-8') -> str:
   return sha160(s.encode(encoding)).hexdigest()
 
-def sha1(s:str, encoding = 'utf-8'):
+def sha1(s:str, encoding = 'utf-8') -> str:
   return sha160_str(s, encoding)
 
 #%% Calcula hash sha256 (colisões 1/2^256)
@@ -142,6 +168,7 @@ def sha1(s:str, encoding = 'utf-8'):
 def sha256_str(s:str, encoding = 'utf-8'):
   return sha256(s.encode(encoding)).hexdigest()
 
+# Alias sha2 para sha256
 def sha2(s:str, encoding = 'utf-8'):
   return sha256_str(s, encoding)
 
@@ -150,5 +177,6 @@ def sha2(s:str, encoding = 'utf-8'):
 def sha512_str(s:str, encoding = 'utf-8'):
   return sha512(s.encode(encoding)).hexdigest()
 
+# Alias sha3 para sha512
 def sha3(s:str, encoding = 'utf-8'):
   return sha512_str(s, encoding)
