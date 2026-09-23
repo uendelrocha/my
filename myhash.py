@@ -119,6 +119,10 @@ def crc_file(file_path):
   # Utiliza a implementação otimizada (incremental) do módulo mycrc
   return hex(mycrc.crc32_file(file_path))
 
+def crc64_file(file_path) -> int:
+  # Utiliza a implementação otimizada (incremental) do módulo mycrc
+  return mycrc.crc64_file(file_path)
+
 #%% Calcula hashes de uma string (colisões: 1/2^32)
 # Este hash NÃO deve ser usado para guardar senhas
 def crc_str(s:str, encoding = 'utf-8') -> str:
